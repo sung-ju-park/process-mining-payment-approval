@@ -49,7 +49,11 @@ def run(ev, cases):
         "payment_weekday": {wd[k]: int(v) for k, v in ph.dt.dayofweek.value_counts().sort_index().items()},
         "payment_hour": {int(k): int(v) for k, v in ph.dt.hour.value_counts().sort_index().items()},
         "request_weekday": {wd[k]: int(v) for k, v in rq.dt.dayofweek.value_counts().sort_index().items()},
-        "payment_batch_share": float(ph.dt.dayofweek.isin([0, 3]).mean()),
+        # 요일과 시각을 따로, 그리고 함께 집계한다 (요일만 세면 '월·목 17시' 비율을 과대 표기하게 됨)
+        "payment_monthu_share": float(ph.dt.dayofweek.isin([0, 3]).mean()),
+        "payment_17h_share": float((ph.dt.hour == 17).mean()),
+        "payment_monthu_17h_share": float((ph.dt.dayofweek.isin([0, 3]) & (ph.dt.hour == 17)).mean()),
+        "payment_n": int(len(ph)),
         "submit_weekday_median": {wd[k]: float(v) for k, v in
                                   paid[~paid["rework"]].groupby("submit_wd")["duration_d"].median().items()},
         "quarterly": seg.groupby("quarter")[["결재", "지급요청 대기", "지급 대기"]].median().round(2)

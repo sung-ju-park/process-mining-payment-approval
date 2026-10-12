@@ -39,8 +39,12 @@ def run(ev, cases, seg):
     e = ev[ev["case_id"].isin(s.index)].copy()
     e["next"] = e.groupby("case_id")["activity"].shift(-1)
     e["gap"] = (e.groupby("case_id")["ts"].shift(-1) - e["ts"]).dt.total_seconds() / 86400
-    resub = e[(e["activity"] == "REJECTED / EMPLOYEE") & (e["next"] == "SUBMITTED / EMPLOYEE")].groupby("case_id")["gap"].sum()
-    s["resub_gap"] = resub.reindex(s.index).fillna(0.0)
+    gaps = e[(e["activity"] == "REJECTED / EMPLOYEE") & (e["next"] == "SUBMITTED / EMPLOYEE")]["gap"]
+    gap_case = e.loc[gaps.index, "case_id"]
+    # 재제출마다 개별로 1일 상한을 적용하고, 줄어든 시간을 케이스별로 더한다
+    # (케이스의 재제출 대기를 모두 합친 뒤 1일로 자르면, 재제출이 여러 번인 건의 절감 효과가 과대 계산됨)
+    per_gap_cut = (gaps - gaps.clip(upper=1.0)).clip(lower=0)
+    s["resub_cut"] = per_gap_cut.groupby(gap_case).sum().reindex(s.index).fillna(0.0)
 
     def total(final, req, paid, resub_cut=0.0):
         return ((paid - s["first"]).dt.total_seconds() / 86400) - resub_cut
@@ -54,7 +58,7 @@ def run(ev, cases, seg):
     p2 = s["final"].map(lambda t: next_batch(t, {0, 3}))
     sc["S2 최종승인 즉시 지급요청"] = total(s["final"], s["final"], p2)
     # S3 재제출 지연을 최대 1일로 (반려 안내·체크리스트 개선 가정)
-    cut = (s["resub_gap"] - s["resub_gap"].clip(upper=1.0)).clip(lower=0)
+    cut = s["resub_cut"]
     sc["S3 재제출 지연 최대 1일"] = base_tot - cut
     # S1+S2+S3
     p4 = s["final"].map(lambda t: next_batch(t, {0, 1, 2, 3, 4}))

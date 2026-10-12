@@ -59,7 +59,7 @@ def payment_batch(perf):
     axes[1].set_title("실제 지급이 처리되는 요일", loc="left", fontsize=11, color=INK)
     for ax in axes:
         ax.set_ylabel("건수")
-    fig.suptitle("요청은 매일 오지만, 지급은 월·목 17시에만 처리된다", x=0.01, ha="left", fontsize=12.5, color=INK)
+    fig.suptitle("요청은 매일 오지만, 지급은 대부분 월·목 오후 5시에 처리된다", x=0.01, ha="left", fontsize=12.5, color=INK)
     fig.tight_layout()
     _save(fig, "payment_batch")
 
@@ -71,7 +71,7 @@ def cutoff_search(wi):
     ax.plot(hs, vs, color=ACC, marker="o", lw=2)
     best = wi["validation"]["cutoff_h"]
     ax.scatter([best], [srch[best] * 100], s=110, color=WARN, zorder=3)
-    ax.annotate(f"24시간 마감 가정 시\n실제 지급 시각 {srch[best]*100:.1f}% 재현", (best, srch[best] * 100),
+    ax.annotate(f"테스트한 조건 중 최고:\n24시간 마감 가정 {srch[best]*100:.1f}%", (best, srch[best] * 100),
                 xytext=(26, 56), fontsize=9.5, color=WARN,
                 arrowprops=dict(arrowstyle="-", color=WARN))
     ax.annotate(f"마감 없음 가정: {srch[0]*100:.1f}%", (0, srch[0] * 100), xytext=(4, srch[0] * 100 - 9),
@@ -79,7 +79,7 @@ def cutoff_search(wi):
     ax.set_xlabel("지급 요청 마감 (배치 몇 시간 전까지 올라와야 포함되는가)")
     ax.set_ylabel("재현율 (%)")
     ax.set_ylim(40, 100)
-    ax.set_title("숨은 규칙 찾기: 지급 마감 시간에 따른 재현율", loc="left", fontsize=12.5, color=INK, pad=10)
+    ax.set_title("지급 마감 시간 가정별 재현율", loc="left", fontsize=12.5, color=INK, pad=10)
     _save(fig, "cutoff_search")
 
 
@@ -120,8 +120,8 @@ def drivers_plot(dr):
     ax.axvline(0, color="#94A3B8", lw=1)
     ax.set_yticks(range(len(items)))
     ax.set_yticklabels([k for k, _ in items])
-    ax.set_xlabel("처리 기간 증가율 (%, 95% 신뢰구간)")
-    ax.set_title("다른 조건을 같게 했을 때, 무엇이 기간을 늘리나", loc="left", fontsize=12.5, color=INK, pad=10)
+    ax.set_xlabel("처리 기간 차이 (%, 95% 신뢰구간)")
+    ax.set_title("관측된 조건을 통제했을 때, 처리 기간과 연관된 요인", loc="left", fontsize=12.5, color=INK, pad=10)
     _save(fig, "drivers")
 
 
